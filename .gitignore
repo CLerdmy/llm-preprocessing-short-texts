@@ -1,0 +1,12 @@
+.devcontainer/**
+
+data/**
+!data/**/.gitkeep
+
+.env
+
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+*.egg-info/
