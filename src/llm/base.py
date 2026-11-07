@@ -9,7 +9,7 @@ from tqdm.auto import tqdm
 from src.prompts import load_prompt
 
 
-LINE = re.compile(r"\s*(\d+)\s*(?:\|\|\||\t|[—–\-:.)])\s*(.+)")
+LINE = re.compile(r"\s*(\d+)\s*(?:\|{2,}_*|\t|[—–\-:.)])\s*(.+)")
 SPACES = re.compile(r"\s+")
 
 
@@ -30,7 +30,7 @@ class BaseLLM(ABC):
         chunks = [df.iloc[i:i + batch] for i in range(0, len(df), batch)]
         answers, log = {}, []
 
-        for n, chunk in enumerate(tqdm(chunks)):
+        for n, chunk in enumerate(tqdm(chunks, disable=len(chunks) == 1)):
             body = "\n".join(f"{row.id} ||| {one_line(row.text)}" for row in chunk.itertuples())
             try:
                 answer = self.ask(body, prompt=full_prompt, temperature=temperature)

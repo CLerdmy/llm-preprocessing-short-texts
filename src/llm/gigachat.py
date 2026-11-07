@@ -64,5 +64,19 @@ class GigaChat(BaseLLM):
             headers={"Authorization": f"Bearer {self.token()}"},
             json=payload, verify=False, timeout=timeout)
         response.raise_for_status()
+
         data = response.json()
-        return {"text": data["choices"][0]["message"]["content"], "tokens": data["usage"]["total_tokens"], "elapsed": round(time.time() - started, 2)}
+        choice = data["choices"][0]
+        usage = data.get("usage", {})
+        result = {
+            "text": choice["message"]["content"],
+            "tokens": usage.get("total_tokens", 0),
+            "elapsed": round(time.time() - started, 2),
+            "finish_reason": choice.get("finish_reason"),
+            "prompt_tokens": usage.get("prompt_tokens", 0),
+            "completion_tokens": usage.get("completion_tokens", 0),
+            "precached_tokens": usage.get("precached_prompt_tokens", 0),
+            "model_version": data.get("model")
+        }
+        self.last = result
+        return result
