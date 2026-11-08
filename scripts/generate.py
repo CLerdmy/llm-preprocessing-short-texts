@@ -93,6 +93,7 @@ def main():
     parser.add_argument("--limit", type=int)
     parser.add_argument("--round", type=int, default=1)
     parser.add_argument("--blocked", action="store_true")
+    parser.add_argument("--source", default="work.parquet")
     args = parser.parse_args()
 
     run_dir = GEN / "runs" / args.run
@@ -108,7 +109,7 @@ def main():
             f"{path} изменен после фиксации"
         prompts[level] = path.read_text(encoding="utf-8")
 
-    docs = pd.read_parquet(GEN / "work.parquet").sort_values("order")
+    docs = pd.read_parquet(GEN / args.source).sort_values("order")
     if args.limit:
         docs = docs.head(args.limit)
     last, attempts = read_state(results)

@@ -44,6 +44,12 @@ class BaseLLM(ABC):
                 if match:
                     got[match.group(1)] = match.group(2).strip()
 
+            if len(chunk) == 1:
+                first, _, rest = answer["text"].strip().partition("\n")
+                match = LINE.match(first)
+                if match and rest.strip() and not re.search(r"^\s*\d+\s*\|\|\|", rest, re.M):
+                    got = {match.group(1): one_line(match.group(2) + " " + rest)}
+
             answers.update(got)
             log.append({"batch": n, "sent": len(chunk), "got": len(got), "tokens": answer["tokens"], "elapsed": answer["elapsed"], "error": None})
 
