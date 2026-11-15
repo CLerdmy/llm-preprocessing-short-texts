@@ -19,10 +19,12 @@ TOP_N = 25
 
 @dataclass
 class TopicResult:
-    topics: list                # K тем, в каждой TOP_N пар (слово, вес) по убыванию веса
-    doc_topic: np.ndarray       # документы / темы
+    topics: list                    # K тем, в каждой TOP_N пар (слово, вес) по убыванию веса
+    doc_topic: np.ndarray           # документы / темы
     params: dict
     seconds: float
+    topic_word: np.ndarray = None   # темы / словарь: полное распределение слов (у BERTopic — веса c-TF-IDF)
+    vocab: list = None              # словарь модели в порядке столбцов topic_word
 
     def words(self, n=10):
         """Топ-n слов каждой темы"""
@@ -34,13 +36,20 @@ class TopicResult:
         info = {"topics": self.topics, "params": self.params, "seconds": self.seconds}
         (path / "topics.json").write_text(json.dumps(info, ensure_ascii=False), encoding="utf-8")
         np.save(path / "doc_topic.npy", self.doc_topic.astype(np.float32))
+        if self.topic_word is not None:
+            np.save(path / "topic_word.npy", self.topic_word.astype(np.float32))
+            (path / "vocab.json").write_text(json.dumps(list(self.vocab), ensure_ascii=False), encoding="utf-8")
 
     @classmethod
     def load(cls, path):
         path = Path(path)
         info = json.loads((path / "topics.json").read_text(encoding="utf-8"))
         topics = [[(w, v) for w, v in topic] for topic in info["topics"]]
-        return cls(topics, np.load(path / "doc_topic.npy"), info["params"], info["seconds"])
+        topic_word = vocab = None
+        if (path / "topic_word.npy").exists():
+            topic_word = np.load(path / "topic_word.npy")
+            vocab = json.loads((path / "vocab.json").read_text(encoding="utf-8"))
+        return cls(topics, np.load(path / "doc_topic.npy"), info["params"], info["seconds"], topic_word, vocab)
 
 
 def filter_vocabulary(docs, min_df=MIN_DF, max_df=MAX_DF):
@@ -71,12 +80,18 @@ class TopicModel:
         self.k = k
         self.seed = seed
         self.params = params
+        self.model = None
 
     def fit(self, docs, texts=None, embeddings=None):
+        """_fit возвращает (темы, документ / тема) или (темы, документ / тема, тема / слово, словарь)"""
         start = time.time()
-        topics, doc_topic = self._fit(docs, texts, embeddings)
+        out = self._fit(docs, texts, embeddings)
+        topics, doc_topic = out[:2]
+        topic_word, vocab = out[2:] if len(out) == 4 else (None, None)
         params = {"model": self.name, "k": self.k, "seed": self.seed, **self.params}
-        return TopicResult(topics, doc_topic, params, round(time.time() - start, 1))
+        return TopicResult(topics, np.asarray(doc_topic), params, round(time.time() - start, 1),
+                           None if topic_word is None else np.asarray(topic_word, dtype=np.float32),
+                           None if vocab is None else [str(w) for w in vocab])
 
     def _fit(self, docs, texts, embeddings):
         raise NotImplementedError

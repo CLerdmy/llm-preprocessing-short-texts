@@ -16,8 +16,8 @@ USE_UMAP = True
 N_NEIGHBORS = 15
 N_COMPONENTS = 5
 REDUCE_FREQUENT_WORDS = False
- 
- 
+
+
 class BERTopic(TopicModel):
     name = "bertopic"
  
@@ -52,4 +52,7 @@ class BERTopic(TopicModel):
         topic_vectors = model.topic_embeddings_ / np.linalg.norm(model.topic_embeddings_, axis=1, keepdims=True)
         doc_topic = np.clip(embeddings @ topic_vectors.T, 0, None)
         doc_topic = doc_topic / doc_topic.sum(axis=1, keepdims=True)
-        return topics, doc_topic
+ 
+        topic_word = model.c_tf_idf_[model._outliers:model._outliers + self.k].toarray()
+        self.model = model
+        return topics, doc_topic, topic_word, list(model.vectorizer_model.get_feature_names_out())

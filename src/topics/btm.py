@@ -35,4 +35,5 @@ class BTM(TopicModel):
         topics = [[(str(vocabulary[j]), float(phi[t, j])) for j in np.argsort(-phi[t])[:TOP_N]]
                   for t in range(self.k)]
         doc_topic = np.nan_to_num(model.transform(vectorized, verbose=False), nan=1 / self.k)
-        return topics, doc_topic
+        self.model = model
+        return topics, doc_topic, phi, list(vocabulary)

@@ -10,7 +10,7 @@ PASSES = 10
 ITERATIONS = 400
 ALPHA = "symmetric"
 ETA = None
- 
+
 
 class LDA(TopicModel):
     name = "lda"
@@ -29,4 +29,6 @@ class LDA(TopicModel):
  
         topics = [[(w, float(p)) for w, p in model.show_topic(i, topn=TOP_N)] for i in range(self.k)]
         doc_topic = corpus2dense(model[corpus], num_terms=self.k).T
-        return topics, doc_topic
+        self.model = model
+        vocab = [dictionary[i] for i in range(len(dictionary))]
+        return topics, doc_topic, model.get_topics(), vocab

@@ -13,8 +13,8 @@ from src.topics.base import TOP_N, TopicModel, build_vocabulary
 K = 20
 SEED = 42
 SCALE = 10
-EPOCHS = 800
-LEARNING_RATE = 0.002
+EPOCHS = 200
+LEARNING_RATE = 0.008
 DT_ALPHA = 3.0
 TW_ALPHA = 2.0
 THETA_TEMP = 1.0
@@ -72,4 +72,5 @@ class FASTopic(TopicModel):
         vocab = model.vocab
         topics = [[(str(vocab[j]), float(beta[t, j])) for j in np.argsort(-beta[t])[:TOP_N]]
                   for t in range(self.k)]
-        return topics, np.asarray(theta, dtype=float)
+        self.model = model
+        return topics, np.asarray(theta, dtype=float), beta, list(vocab)
